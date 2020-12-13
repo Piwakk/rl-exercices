@@ -19,14 +19,12 @@ class PPONetwork(nn.Module):
         return self.fc_value(F.relu(self.fc_1(x)))
 
 
-class PPOAdaptive:
-    def __init__(self, observation_space, action_space, learning_rate, gamma, delta, k):
+class PPOBase:
+    def __init__(self, observation_space, action_space, learning_rate, gamma, k):
         super().__init__()
 
         self.transitions = []
         self.k = k
-        self.beta = 1
-        self.delta = delta
         self.network = PPONetwork(observation_space, action_space)
 
         self.learning_rate = learning_rate
@@ -89,6 +87,30 @@ class PPOAdaptive:
         return loss.item()
 
     def _optimize_policy(self, start_states, actions, rewards, end_states, dones):
+        raise NotImplementedError("`_optimize_policy` not implemented.")
+
+    def optimize(self):
+        """Optimize the agent's networks."""
+
+        start_states, actions, rewards, end_states, dones = self._get_batch()
+        policy_return = self._optimize_policy(
+            start_states, actions, rewards, end_states, dones
+        )
+        value_return = self._optimize_value(
+            start_states, actions, rewards, end_states, dones
+        )
+
+        return policy_return, value_return
+
+
+class PPOAdaptive(PPOBase):
+    def __init__(self, observation_space, action_space, learning_rate, gamma, k, delta):
+        super().__init__(observation_space, action_space, learning_rate, gamma, k)
+
+        self.beta = 1
+        self.delta = delta
+
+    def _optimize_policy(self, start_states, actions, rewards, end_states, dones):
         # Compute the old advantage.
         td_0 = rewards + self.gamma * self.network.value(end_states) * dones
         old_advantage = (td_0 - self.network.value(start_states)).detach()
@@ -135,15 +157,39 @@ class PPOAdaptive:
 
         return losses.mean().item(), d_kl.item()
 
-    def optimize(self):
-        """Optimize the agent's networks."""
 
-        start_states, actions, rewards, end_states, dones = self._get_batch()
-        policy_loss, d_kl = self._optimize_policy(
-            start_states, actions, rewards, end_states, dones
-        )
-        value_loss = self._optimize_value(
-            start_states, actions, rewards, end_states, dones
-        )
+class PPOClipped(PPOBase):
+    def __init__(
+        self, observation_space, action_space, learning_rate, gamma, k, epsilon
+    ):
+        super().__init__(observation_space, action_space, learning_rate, gamma, k)
 
-        return policy_loss, d_kl, value_loss
+        self.epsilon = epsilon
+
+    def _optimize_policy(self, start_states, actions, rewards, end_states, dones):
+        # Compute the old advantage.
+        td_0 = rewards + self.gamma * self.network.value(end_states) * dones
+        old_advantage = (td_0 - self.network.value(start_states)).detach()
+        old_probabilities = self.network.policy(start_states, softmax_dim=1).detach()
+        old_action_probabilities = old_probabilities.gather(1, actions).detach()
+
+        losses = torch.zeros(self.k)
+
+        # Optimize the policy.
+        for i in range(self.k):
+            new_probabilities = self.network.policy(start_states, softmax_dim=1)
+            new_action_probabilities = new_probabilities.gather(1, actions)
+            ratio = new_action_probabilities / old_action_probabilities
+
+            loss = -torch.minimum(
+                ratio * old_advantage,
+                torch.clamp(ratio, 1 - self.epsilon, 1 + self.epsilon) * old_advantage,
+            ).mean()
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            losses[i] = loss.item()
+
+        return losses.mean().item()

@@ -1,6 +1,6 @@
 # TME RLADL
 
-My answers to the Reinforcement Learning course exercises of [Sorbonne Université's M2 DAC](http://dac.lip6.fr/master/) (Master of Data Science).
+My answers to the Reinforcement Learning course exercises of [Sorbonne Université M2 DAC](http://dac.lip6.fr/master/) (Master of Data Science).
 
 Some useful resources:
 
@@ -12,3 +12,6 @@ Implemented algorithms:
 
 - TME 5: Actor-Critic.
   - TD(0) on CartPole.
+- TME 6: PPO.
+  - Adaptive PPO on CartPole.
+  - Clipped PPO on CartPole.

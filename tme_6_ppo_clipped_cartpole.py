@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from agent import PPOAdaptive
+from agent import PPOAdaptive, PPOClipped
 from experiment import Experiment
 from logger import get_logger
 
@@ -18,15 +18,15 @@ if __name__ == "__main__":
 
     # Create a new agent here.
     experiment = Experiment.create(
-        base_name="ppo_adaptive_CartPole-v1",
-        model_class=PPOAdaptive,
+        base_name="ppo_clipped_CartPole-v1",
+        model_class=PPOClipped,
         hp={
             "observation_space": env.observation_space,
             "action_space": env.action_space,
             "learning_rate": 0.0005,
             "gamma": 0.99,
-            "delta": 1e-2,
             "k": 1,
+            "epsilon": 1e-1,
         },
     )
     experiment.save()
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
         state = env.reset()
         episode_reward, episode_steps = 0, 0
-        entropies, policy_losses, d_kls, value_losses = [], [], [], []
+        entropies, policy_losses, value_losses = [], [], []
 
         while True:
             # Draw an action and act on the environment.
@@ -71,9 +71,8 @@ if __name__ == "__main__":
 
             # Optimize if needed.
             if (experiment.step + 1) % optimize_every == 0:
-                (policy_loss, d_kl), value_loss = experiment.model.optimize()
+                policy_loss, value_loss = experiment.model.optimize()
                 policy_losses.append(policy_loss)
-                d_kls.append(d_kl)
                 value_losses.append(value_loss)
 
             # Show if needed.
@@ -97,7 +96,6 @@ if __name__ == "__main__":
 
         if len(policy_losses) > 0:
             debug_scalars["policy_loss"] = np.mean(policy_losses)
-            debug_scalars["d_kls"] = np.mean(d_kls)
             debug_scalars["value_loss"] = np.mean(value_losses)
 
         writer.add_scalars("debug", debug_scalars, global_step=experiment.episode)
