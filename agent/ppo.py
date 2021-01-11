@@ -32,6 +32,24 @@ class PPOBase:
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
         self.transitions = []
 
+    def step(self, state):
+        """Return the action obtained from `state` and the policy entropy."""
+
+        probabilities = self.network.policy(state)
+        entropy = -(probabilities * torch.log(probabilities)).sum()
+        return (
+            torch.distributions.Categorical(probabilities).sample().item(),
+            entropy.item(),
+        )
+
+    def add_transition(self, transition):
+        """Add a transition to the agent's memory.
+
+        :param transition: `(start_state, action, reward, end_state, done)`.
+        """
+
+        self.transitions.append(transition)
+
     def _get_batch(self):
         """Transform `self.transitions` into a tuple of tensors then empty it.
 
@@ -57,24 +75,6 @@ class PPOBase:
             torch.tensor(end_states, dtype=torch.float),
             torch.tensor(dones, dtype=torch.float),
         )
-
-    def step(self, state):
-        """Return the action obtained from `state` and the policy entropy."""
-
-        probabilities = self.network.policy(state)
-        entropy = -(probabilities * torch.log(probabilities)).sum()
-        return (
-            torch.distributions.Categorical(probabilities).sample().item(),
-            entropy.item(),
-        )
-
-    def add_transition(self, transition):
-        """Add a transition to the agent's memory.
-
-        :param transition: `(start_state, action, reward, end_state, done)`.
-        """
-
-        self.transitions.append(transition)
 
     def _optimize_value(self, start_states, actions, rewards, end_states, dones):
         td_0 = rewards + self.gamma * self.network.value(end_states) * dones

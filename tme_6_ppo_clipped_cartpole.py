@@ -25,7 +25,7 @@ if __name__ == "__main__":
             "action_space": env.action_space,
             "learning_rate": 0.0005,
             "gamma": 0.99,
-            "k": 1,
+            "k": 3,
             "epsilon": 1e-1,
         },
     )

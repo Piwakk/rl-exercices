@@ -26,7 +26,7 @@ if __name__ == "__main__":
             "learning_rate": 0.0005,
             "gamma": 0.99,
             "delta": 1e-2,
-            "k": 1,
+            "k": 3,
         },
     )
     experiment.save()
