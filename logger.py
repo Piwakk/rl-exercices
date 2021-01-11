@@ -13,8 +13,6 @@ def get_logger(name="", file_path=None):
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
-    file_path = file_path
-
     if file_path is not None:
         if not file_path.parent.exists():
             file_path.parent.mkdir()
