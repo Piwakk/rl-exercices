@@ -1,6 +1,6 @@
 # TME RLADL
 
-My answers to the Reinforcement Learning course exercises of [Sorbonne Université M2 DAC](http://dac.lip6.fr/master/) (Master of Data Science).
+Answers to the Reinforcement Learning course exercises of [Sorbonne Université M2 DAC](http://dac.lip6.fr/master/) (Master of Data Science).
 
 Some useful resources:
 
