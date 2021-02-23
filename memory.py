@@ -6,15 +6,18 @@ class Memory:
     """A Memory which stores transitions: `(start_state, action, end_state, reward, done)`.
     When the maximum memory size is reached, adding a new transition replaces a random old transition."""
 
-    def __init__(self, max_size, state_size):
+    def __init__(self, max_size, state_size, action_size=1):
         self.max_size = max_size
-        self.state_size = state_size
+        self.action_shape = (action_size,)
+        self.state_shape = (state_size,)
 
         self.length = 0
 
-        self.start_states = torch.zeros((max_size, state_size), dtype=torch.float)
-        self.actions = torch.zeros((max_size, 1), dtype=torch.float)
-        self.end_states = torch.zeros((max_size, state_size), dtype=torch.float)
+        self.start_states = torch.zeros(
+            (max_size,) + self.state_shape, dtype=torch.float
+        )
+        self.actions = torch.zeros((max_size,) + self.action_shape, dtype=torch.float)
+        self.end_states = torch.zeros((max_size,) + self.state_shape, dtype=torch.float)
         self.rewards = torch.zeros((max_size, 1), dtype=torch.float)
         self.dones = torch.zeros((max_size, 1), dtype=torch.float)
 
@@ -39,29 +42,29 @@ class Memory:
 
         if (
             type(start_state) != torch.Tensor
-            or start_state.shape != (self.state_size,)
+            or start_state.shape != self.state_shape
             or start_state.dtype != torch.float
         ):
             raise ValueError(
-                "`start_state` must be a `torch.Tensor` of shape `(state_size,)` and dtype `torch.float`."
+                f"`start_state` must be a `torch.Tensor` of shape `{self.state_shape}` and dtype `torch.float`."
             )
 
         if (
             type(action) != torch.Tensor
-            or action.shape != (1,)
+            or action.shape != self.action_shape
             or action.dtype != torch.float
         ):
             raise ValueError(
-                "`action` must be a `torch.Tensor` of shape `(1,)` and dtype `torch.float`."
+                f"`action` must be a `torch.Tensor` of shape `{self.action_shape}` and dtype `torch.float`."
             )
 
         if (
             type(end_state) != torch.Tensor
-            or end_state.shape != (self.state_size,)
+            or end_state.shape != self.state_shape
             or end_state.dtype != torch.float
         ):
             raise ValueError(
-                "`end_state` must be a `torch.Tensor` of shape `(state_size,)` and dtype `torch.float`."
+                f"`end_state` must be a `torch.Tensor` of shape `{self.state_shape}` and dtype `torch.float`."
             )
 
         if (
