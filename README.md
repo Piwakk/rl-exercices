@@ -10,6 +10,9 @@ Some useful resources:
 
 Implemented algorithms:
 
+- TME 3:
+  - QLearning on Gridworld.
+  - SARSA on Gridworld.
 - TME 5: Actor-Critic.
   - TD(0) on CartPole.
 - TME 6: PPO.
