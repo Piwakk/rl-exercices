@@ -4,7 +4,7 @@
 | ------------------ | ----------------------- | ------ |
 | 1 (Bandits)        | Rapport - notebook      | Pierre |
 | 2 (Value / Policy) | Rapport - notebook      | Pierre |
-| 3 (Q-Learning)     | Rapport - pdf 1         | Pierre |
+| 3 (Q-Learning)     | :white_check_mark:      | Pierre |
 | 4 (DQN)            | Rapport - pdf 1         | Pierre |
 | 5 (Actor-Critic)   | Rapport - pdf 1         | Pierre |
 | 6 (PPO)            | Rapport - pdf 1         | Pierre |
