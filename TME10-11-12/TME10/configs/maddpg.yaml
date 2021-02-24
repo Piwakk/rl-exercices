@@ -1,0 +1,17 @@
+dim_state: 14
+dim_action: 2
+nber_ag: 3
+lr: 0.0005  
+gamma: .95
+h: 50
+buffer_limit: 1000
+std: 0.1
+action_low: -1.
+action_high: 1.
+mini_batch_size: 100
+rho: 0.3
+nber_ep: 10000
+nber_action: 100
+freq_verbose: 100
+freq_optim: 10
+env: simple_adversary #simple_spread # #simple_tag
