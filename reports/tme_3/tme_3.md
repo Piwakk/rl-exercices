@@ -25,7 +25,7 @@ Ces hyperparamètres sont utilisés pour les deux environnements.
 
 ## Plan 2
 
-<img src="tme_3/plan2.png" style="zoom:60%;" />
+<img src="plan2.png" style="zoom:60%;" />
 
 On remarque la présence d’un bloc jaune qui récompense beaucoup, mais qui est placé après le bloc vert (terminal) sur le chemin naturel de l’agent.
 
@@ -33,25 +33,25 @@ On remarque la présence d’un bloc jaune qui récompense beaucoup, mais qui es
 
 Avec une exploration *epsilon greedy*, on voit que l’apprentissage se fait très rapidement (convergence après 200 épisodes) mais l’agent ne parvient presque jamais à aller prendre le bloc jaune.
 
-![](tme_3/q_learning_plan2.svg)
+![](q_learning_plan2.svg)
 
 L’exploration *epsilon greedy decay* améliore les performances de l’agent, qui parvient à récupérer la récompense additionnelle beaucoup plus souvent.
 
-![](tme_3/q_learning_decay_plan2.svg)
+![](q_learning_decay_plan2.svg)
 
 ### SARSA
 
 SARSA ne parvient en revanche jamais à atteindre la récompense additionnelle, que ce soit avec la stratégie *epsilon greedy* classique ·
 
-![](tme_3/sarsa_plan2.svg)
+![](sarsa_plan2.svg)
 
 Ou avec la stratégie *epsilon greedy decay*. On remarque cependant que les performances oscillent moins.
 
-![](tme_3/sarsa_decay_plan2.svg)
+![](sarsa_decay_plan2.svg)
 
 ## Plan 3
 
-<img src="tme_3/plan3.png" style="zoom:60%;" />
+<img src="plan3.png" style="zoom:60%;" />
 
 Deux blocs verts sont présents, l’un étant légèrement plus accessible que l’autre.
 
@@ -59,18 +59,18 @@ Deux blocs verts sont présents, l’un étant légèrement plus accessible que 
 
 Avec une exploration *epsilon greedy*, l’apprentissage se fait rapidement, et les oscillations sont assez modérées.
 
-![](tme_3/q_learning_plan3.svg)
+![](q_learning_plan3.svg)
 
 L’exploration *epsilon greedy decay* améliore les performances de l’agent après convergence, même si l’apprentissage prend plus de temps.
 
-![](tme_3/q_learning_decay_plan3.svg)
+![](q_learning_decay_plan3.svg)
 
 ### SARSA
 
 SARSA a des bonnes performances et une convergence rapide :
 
-![](tme_3/sarsa_plan3.svg)
+![](sarsa_plan3.svg)
 
 La stratégie *epsilon greedy decay* prend un peu plus de temps mais oscille moins après convergence :
 
-![](tme_3/sarsa_decay_plan3.svg)
+![](sarsa_decay_plan3.svg)
