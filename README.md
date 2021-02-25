@@ -10,6 +10,11 @@ Some useful resources:
 
 Implemented algorithms:
 
+- TME 1:
+  - Epsilon greedy, UCB and Lin-UCB for Bandits.
+- TME 2:
+  - Policy Iteration on GridWorld.
+  - Value Iteration on GridWorld.
 - TME 3:
   - QLearning on Gridworld.
   - SARSA on Gridworld.
