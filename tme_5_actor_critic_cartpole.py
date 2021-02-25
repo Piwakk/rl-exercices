@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     # Create a new agent here.
     experiment = Experiment.create(
-        base_name="actor_critic_CartPole-v1",
+        base_name="actor_critic/actor_critic_CartPole-v1",
         model_class=ActorCritic,
         hp={
             "observation_space": env.observation_space,
