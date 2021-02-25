@@ -2,9 +2,9 @@
 
 | TP                 | État                    |        |
 | ------------------ | ----------------------- | ------ |
-| 1 (Bandits)        | Rapport - notebook      | Pierre |
-| 2 (Value / Policy) | Rapport - notebook      | Pierre |
-| 3 (Q-Learning)     | :white_check_mark:      | Pierre |
+| 1 (Bandits)        | :white_check_mark:      |        |
+| 2 (Value / Policy) | :white_check_mark:      |        |
+| 3 (Q-Learning)     | :white_check_mark:      |        |
 | 4 (DQN)            | Rapport - pdf 1         | Pierre |
 | 5 (Actor-Critic)   | Rapport - pdf 1         | Pierre |
 | 6 (PPO)            | Rapport - pdf 1         | Pierre |
