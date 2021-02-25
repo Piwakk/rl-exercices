@@ -2,75 +2,61 @@
 
 _Victor Duthoit, Pierre Wan-Fat_
 
-Dans ce TME, on utilise l’environnement GridWorld. Les cartes 2 et 3 ont été utilisées, les cartes précédentes étant trop simples et la carte 4 étant déjà trop grosse pour que l’entraînement se finisse en un temps raisonnable. Les courbes présentées représentent 3 000 épisodes.
+Dans ce TME, on utilise l’environnement GridWorld.
 
-On a implémenté les algorithmes Q-Learning et SARSA, avec deux types d’exploration (*epsilon greedy* et *epsilon greedy decay*).
+## Q-Learning
 
-## Hyperparamètres
+### Plans 0 à 3
 
-Ces hyperparamètres sont utilisés pour les deux environnements.
+![](q_learning_0_3.png)
 
-```python
-# Q-Learning.
-	alpha = 0.1
-	gamma = 0.99
+0. Comme prévu, l’agent apprend très vite sur ce plan.
+1. L’agent apprend tout aussi.
+2. L’agent se trouve bloqué dans un minimum local pour le plan 2, même s’il est passé au moins une fois dans une trajectoire qui lui a donné la récompense additionnelle.
+3. L’agent apprend correctement sur un terrain avec deux états terminaux.
 
-# epsilon greedy.
-	epsilon = 0.1
+### Plans 4 à 6
 
-# epsilon greedy decay (epsilon = epsilon_0 * alpha / global_step)
-    epsilon_0 = 0.1
-    alpha = 1000
-```
+![](q_learning_4_6.png)
 
-## Plan 2
+4. Accéder à l’état terminal nécessite de prendre un malus. L'agent ne semble pas réussir à apprendre cela. Comme pour le plan 2, on note que ce n’est pas parce que la trajectoire optimale a été suivie une fois qu’elle sera suivie par la suite : un apprentissage de plus de 1000 épisodes semble nécessaire.
+5. L'agent est bloqué dans un minimum local. Il ne considère pas la récompense qui se trouve loin d’être aléatoirement atteignable. 
+6. La conclusion tirée pour le plan 5 est aussi valable pour le plan 6.
 
-<img src="plan2.png" style="zoom:60%;" />
+### Plans 7 à 10
 
-On remarque la présence d’un bloc jaune qui récompense beaucoup, mais qui est placé après le bloc vert (terminal) sur le chemin naturel de l’agent.
+![](q_learning_7_10.png)
 
-### Q-Learning
+7. Le plan 7 est une version plus difficile du plan 4. L'agent arrive seulement à récupérer les récompenses proches, sans pouvoir atteindre l’état final.
+8. Le plan 8 est relativement grand, l'agent prend beaucoup de temps à explorer souvent sans atteindre l'état final. Néanmoins, il atteint plusieurs fois l’état final.
+9. Dans ce plan, l'agent trouve une solution sous-optimale : il prend les récompenses mais reste coincé dans la zone de départ. On peut émettre l'hypothèse que les états finaux à récompenses négatives "découragent" l'agent de s'approcher de la porte. 
+10. Le plan 10 est relativement facile et son apprentissage est relativement stable.
 
-Avec une exploration *epsilon greedy*, on voit que l’apprentissage se fait très rapidement (convergence après 200 épisodes) mais l’agent ne parvient presque jamais à aller prendre le bloc jaune.
+### Rôle de γ et α
 
-![](q_learning_plan2.svg)
+On effectue les tests sur le plan 1.
 
-L’exploration *epsilon greedy decay* améliore les performances de l’agent, qui parvient à récupérer la récompense additionnelle beaucoup plus souvent.
+![](q_learning_alpha.png)L’apprentissage est plus rapide pour des $\alpha$ élevés ; plus précisément, un $\alpha$ trop faible rend l’apprentissage plus lent et moins stable.
 
-![](q_learning_decay_plan2.svg)
+![](q_learning_gamma.png)
 
-### SARSA
+Les conclusions similaires pour l’effet de $\gamma$ : une valeur trop faible donne un apprentissage instable (l’agent "doute").
 
-SARSA ne parvient en revanche jamais à atteindre la récompense additionnelle, que ce soit avec la stratégie *epsilon greedy* classique ·
+### Durée de l’apprentissage
 
-![](sarsa_plan2.svg)
+On tente d’augmenter le temps d’apprentissage sur les environnements difficiles.
 
-Ou avec la stratégie *epsilon greedy decay*. On remarque cependant que les performances oscillent moins.
+![](q_learning_long.png)Le nombre d’épisodes permet avant tout de limiter le nombre d’actions, la trajectoire est plus directe mais pas optimale.
 
-![](sarsa_decay_plan2.svg)
+## SARSA
 
-## Plan 3
+On couple l’algorithme SARSA avec une stratégie *epsilon-greedy* qui devient 0 (exploitation pure) après 500 épisodes. Sur le plan 2 :
 
-<img src="plan3.png" style="zoom:60%;" />
+![](sarsa_long.png)
 
-Deux blocs verts sont présents, l’un étant légèrement plus accessible que l’autre.
+Il semble qu'une exploration de type "full random" puis "full determinist" ne donne pas de résultats très bons. L'agent explore bien le plan avant l'épisode 7000. Il semblerait qu'il ait appris puisque qu'il réempruntera de nombreuses fois la trajectoire optimale. Néanmoins, il semblerait qu'il change sa stratégie autour de l'épisode 8500 pour prendre uniquement la trajectoire la plus directe. On peut émettre l'hypothèse que la récompense jaune n'est pas forcément évidente à atteindre même en connaissant la trajectoire car l'agent passe par deux fois à côté de l'état final. Ainsi, l'effet non déterministe des mouvements (MDP) va faire arrêter l'agent à plusieurs reprises sur l'état final. Un potentiel phénomène d'apprentissage va augmenter la qualité de la trajectoire menant directement à l'état final. En effet, quand l'agent est placé sur certaines cases, il faut :
 
-### Q-Learning
+- dans le cas où la récompense jaune a déjà été atteinte, se tourner vers la sortie 
+- dans le cas où la récompense jaune n'a pas encore été ramassée, se tourner vers la case jaune. 
+  Une temporalité/directionnalité est ainsi à mettre en place pour permettre de surpasser cet obstacle. 
 
-Avec une exploration *epsilon greedy*, l’apprentissage se fait rapidement, et les oscillations sont assez modérées.
-
-![](q_learning_plan3.svg)
-
-L’exploration *epsilon greedy decay* améliore les performances de l’agent après convergence, même si l’apprentissage prend plus de temps.
-
-![](q_learning_decay_plan3.svg)
-
-### SARSA
-
-SARSA a des bonnes performances et une convergence rapide :
-
-![](sarsa_plan3.svg)
-
-La stratégie *epsilon greedy decay* prend un peu plus de temps mais oscille moins après convergence :
-
-![](sarsa_decay_plan3.svg)
