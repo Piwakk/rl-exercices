@@ -73,10 +73,6 @@ if __name__ == "__main__":
                 if (experiment.step + 1) % optimize_every == 0:
                     experiment.model.optimize()
 
-                # Show if needed.
-                if show:
-                    env.render()
-
                 if done:
                     break
 
