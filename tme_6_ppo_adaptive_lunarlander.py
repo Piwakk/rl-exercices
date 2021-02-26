@@ -19,11 +19,11 @@ if __name__ == "__main__":
     for learning_rate, gamma, delta, k in product(
         (0.0001, 0.001, 0.01), (0.98, 0.99, 0.999), (1e-3, 1e-2, 5e-2), (2, 3, 4)
     ):
-        env = gym.make("LunarLander-v1")
+        env = gym.make("LunarLander-v2")
 
         # Create a new agent here.
         experiment = Experiment.create(
-            base_name="ppo/ppo_adaptive_LunarLander-v1",
+            base_name="ppo/ppo_adaptive_LunarLander-v2",
             model_class=PPOAdaptive,
             hp={
                 "observation_space": env.observation_space,
