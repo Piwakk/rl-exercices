@@ -22,8 +22,10 @@ Implemented algorithms:
   - DQN on CartPole.
   - Dueling DQN on CartPole.
   - Prioritized DQN on CartPole.
+  - DQN on LunarLander.
 - TME 5: Actor-Critic.
   - TD(0) on CartPole.
+  - TD(0) on LunarLander.
 - TME 6: PPO.
   - Adaptive PPO on CartPole.
   - Clipped PPO on CartPole.
