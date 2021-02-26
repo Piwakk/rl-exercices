@@ -32,11 +32,11 @@ if __name__ == "__main__":
         (0.98, 0.99),
         (0.99, 0.995),
     ):
-        env = gym.make("Pendulum-v0")
+        env = gym.make("LunarLanderContinuous-v2")
 
         # Create a new agent here.
         experiment = Experiment.create(
-            base_name="ddpg/ddpg_Pendulum-v0",
+            base_name="ddpg/ddpg_LunarLanderContinuous-v2",
             model_class=DDPG,
             hp={
                 "observation_space": env.observation_space,
