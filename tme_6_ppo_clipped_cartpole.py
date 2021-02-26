@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
         # Create a new agent here.
         experiment = Experiment.create(
-            base_name="ppo_clipped_CartPole-v1",
+            base_name="ppo/ppo_clipped_CartPole-v1",
             model_class=PPOClipped,
             hp={
                 "observation_space": env.observation_space,

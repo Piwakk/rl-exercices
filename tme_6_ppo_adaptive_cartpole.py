@@ -23,15 +23,15 @@ if __name__ == "__main__":
 
         # Create a new agent here.
         experiment = Experiment.create(
-            base_name="ppo_adaptive_CartPole-v1",
+            base_name="ppo/ppo_adaptive_CartPole-v1",
             model_class=PPOAdaptive,
             hp={
                 "observation_space": env.observation_space,
                 "action_space": env.action_space,
-                "learning_rate": 0.0005,
-                "gamma": 0.99,
-                "delta": 1e-2,
-                "k": 3,
+                "learning_rate": learning_rate,
+                "gamma": gamma,
+                "delta": delta,
+                "k": k,
             },
         )
         experiment.save()
