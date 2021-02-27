@@ -10,13 +10,15 @@ from experiment import Experiment
 from logger import get_logger
 
 
-number_of_episodes = 10000
+number_of_episodes = 2000
 optimize_every = 64  # Number of steps.
 show_every = 100  # Number of episodes.
 
 
 if __name__ == "__main__":
-    for learning_rate, gamma, delta, k in ((0.001, 0.98, 0.01, 2),):
+    for learning_rate, gamma, delta, k in product(
+        (0.0001, 0.001, 0.01), (0.98, 0.99, 0.999), (1e-3, 1e-2, 5e-2), (2, 3, 4)
+    ):
         env = gym.make("LunarLander-v2")
 
         # Create a new agent here.
@@ -78,10 +80,6 @@ if __name__ == "__main__":
                     policy_losses.append(policy_loss)
                     d_kls.append(d_kl)
                     value_losses.append(value_loss)
-
-                # Show if needed.
-                if show:
-                    env.render()
 
                 if done:
                     break

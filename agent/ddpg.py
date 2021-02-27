@@ -60,7 +60,7 @@ class DDPG:
         self.gamma = gamma
         self.rho = rho
 
-    def step(self, state, train=True):
+    def step(self, state, train=True, episode=None):
         """Return the action obtained from `state`.
 
         :param train: if `True`, add a random noise."""
@@ -73,7 +73,13 @@ class DDPG:
 
         # Add some noise.
         if train:
-            action += torch.randn(1) * self.noise_sigma
+            noise = torch.randn(1) * self.noise_sigma
+
+            if episode is None:
+                action += torch.randn(1) * self.noise_sigma
+            else:
+                p = episode / 300
+                action = action + (1 - p) * noise
 
         return (
             torch.clip(action, self.action_low, self.action_high)

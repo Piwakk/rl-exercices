@@ -5,9 +5,9 @@
 | 1 (Bandits)        | :white_check_mark:      |        |
 | 2 (Value / Policy) | :white_check_mark:      |        |
 | 3 (Q-Learning)     | :white_check_mark:      |        |
-| 4 (DQN)            | Rapport - pdf 1         | Pierre |
-| 5 (Actor-Critic)   | Rapport - pdf 1         | Pierre |
-| 6 (PPO)            | Rapport - pdf 1         | Pierre |
+| 4 (DQN)            | :white_check_mark:      |        |
+| 5 (Actor-Critic)   | :white_check_mark:      |        |
+| 6 (PPO)            | :white_check_mark:      |        |
 | 7 (DDPG)           | Rapport - pdf 1         | Pierre |
 | 8 (GAN)            | faire + Rapport - pdf 2 |        |
 | 9 (VAE)            | faire + Rapport - pdf 2 |        |
