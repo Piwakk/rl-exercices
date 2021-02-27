@@ -1,5 +1,5 @@
 import matplotlib
-
+import time
 matplotlib.use("TkAgg")
 import gym
 import multiagent
@@ -15,12 +15,18 @@ import copy
 from utils import State, load_yaml, device, make_env, write_it, write_epoch
 from ddpgMultiAgent import DDPGMultiAgent
 from torch.utils.tensorboard import SummaryWriter
+import argparse
 
 
 def __main__():
 
+	#---parser---#
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-c', '--configuration', type=str, help='choose condiguration file')
+	args = parser.parse_args()
+
 	#---config---#
-	config = load_yaml(f'./configs/maddpg.yaml')
+	config = load_yaml(f'./{args.configuration}')
 
 	#---env---#
 	env,scenario,world = make_env(config.env)
@@ -33,8 +39,8 @@ def __main__():
 	agent = DDPGMultiAgent(config)
 
 	#---writer---#
-	run_id = f'env{config.env}_lr{config.lr}_gamma{config.gamma}_h_{config.h}_buffer{config.buffer_limit}_std{config.std}\
-				_batch{config.mini_batch_size}_rho{config.rho}_ep{config.nber_ep}_act{config.nber_action}'
+	run_id = f'env{config.env}/lr{config.lr}_gamma{config.gamma}_h_{config.h}_buffer{config.buffer_limit}_std{config.std}\
+				_batch{config.mini_batch_size}_rho{config.rho}_ep{config.nber_ep}_act{config.nber_action}_{str(time.time()).replace(".", "_")}'
 	writer = SummaryWriter(f'runs/{run_id}')
 
 	for ep in range(config.nber_ep):

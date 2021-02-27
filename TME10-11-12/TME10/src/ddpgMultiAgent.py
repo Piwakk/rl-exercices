@@ -39,9 +39,14 @@ class Mu(nn.Module):
 	"""docstring for MU"""
 	def __init__(self, config):
 		super(Mu, self).__init__()
+		# self.ff = nn.Sequential(
+		# 	nn.Linear(config.dim_state, config.h),
+		# 	nn.BatchNorm1d(config.h),
+		# 	nn.ReLU(),
+		# 	nn.Linear(config.h, config.dim_action)
+		# 	)
 		self.ff = nn.Sequential(
 			nn.Linear(config.dim_state, config.h),
-			nn.BatchNorm1d(config.h),
 			nn.ReLU(),
 			nn.Linear(config.h, config.dim_action)
 			)
@@ -55,12 +60,19 @@ class Q(nn.Module):
 	def __init__(self, config):
 		super().__init__()
 		h = config.h
+		# self.ff = nn.Sequential(
+		# 	nn.Linear(config.dim_state + config.dim_action * config.nber_ag, 2 * h),
+		# 	nn.BatchNorm1d(2 * h),
+		# 	nn.ReLU(),
+		# 	nn.Linear(2 * h, h),
+		# 	nn.BatchNorm1d(h),
+		# 	nn.ReLU(),
+		# 	nn.Linear(h, 1)
+		# 	)
 		self.ff = nn.Sequential(
 			nn.Linear(config.dim_state + config.dim_action * config.nber_ag, 2 * h),
-			nn.BatchNorm1d(2 * h),
 			nn.ReLU(),
 			nn.Linear(2 * h, h),
-			nn.BatchNorm1d(h),
 			nn.ReLU(),
 			nn.Linear(h, 1)
 			)
@@ -87,9 +99,11 @@ class DDPGAgent(nn.Module):
 		self.q, self.q_target = Q(config), Q(config)
 		self.mu_target.load_state_dict(self.mu.state_dict())
 		self.q_target.load_state_dict(self.q.state_dict())
+		self.mu.eval()
 
 		#---optimizers tools---#
-		self.optim = torch.optim.Adam(params=self.parameters(), lr=config.lr)
+		self.optim_q = torch.optim.Adam(params=self.q.parameters(), lr=config.lr_critic)
+		self.optim_mu = torch.optim.Adam(params=self.mu.parameters(), lr=config.lr_action)
 
 		#---memory---#
 		self.memory = deque(maxlen=config.buffer_limit)
@@ -98,11 +112,9 @@ class DDPGAgent(nn.Module):
 		self.to(dtype=torch.float64, device=device)
 
 	def act(self, s):
-		self.mu.eval()
 		eps = torch.empty(self.dim_action).normal_(mean=0,std=self.std)  # noise for exploration
 		action = self.mu(s.unsqueeze(0)) + eps
-		action = torch.where(action < self.action_low, self.action_low, action)     # action clipped into possible values
-		action = torch.where(action > self.action_high, self.action_high, action)   # action clipped into possible values
+		action = torch.clamp(action, self.action_low, self.action_high)
 		return action.flatten().detach().numpy()
 
 class DDPGMultiAgent(nn.Module):
@@ -149,30 +161,37 @@ class DDPGMultiAgent(nn.Module):
 			agent_i.mu.train()
 
 			s, s_p, a, r = self.sample()
-			a_p = [ agent.mu_target(s_p[i]) for i, agent in enumerate(self.agent_list) ]
+			a_p = [ agent.mu_target(s_p[j]) for j, agent in enumerate(self.agent_list) ]
 
 			#--critic--#
-			y = r[i].unsqueeze(-1) + self.gamma * agent_i.q(s_p[i], a_p)
+			y = r[i].unsqueeze(-1) + self.gamma * agent_i.q_target(s_p[i], a_p)
 			q = agent_i.q(s[i], a)
 			critic_loss = F.smooth_l1_loss(q, y.detach())
 
-			#--actor--#
-			mu = [ agent.mu(s[i]) for i, agent in enumerate(self.agent_list) ]
-			agent_i.q.requires_grad_(False)
-			actor_loss = agent_i.q(s[i], mu).mean(dim=0)
+			agent_i.optim_q.zero_grad()
+			critic_loss.backward()
+			torch.nn.utils.clip_grad_norm_(agent_i.q.parameters(), 0.5)
+			agent_i.optim_q.step()
 
-			#--optim--#
-			agent_i.optim.zero_grad()
-			(critic_loss - actor_loss).backward()
-			agent_i.optim.step()
-			agent_i.q.requires_grad_(True)
+			#--actor--#
+			mu = [ agent.mu(s[j]) for j, agent in enumerate(self.agent_list) ]
+			actor_loss =  - agent_i.q(s[i], mu).mean(dim=0)
+			actor_loss += (mu[i]**2).mean() * 1e-3
+
+			agent_i.optim_mu.zero_grad()
+			actor_loss.backward()
+			torch.nn.utils.clip_grad_norm_(agent_i.mu.parameters(), 0.5)
+			agent_i.optim_mu.step()
 
 			#--add record--#
 			cl.append(critic_loss.item())
 			al.append(actor_loss.item())
 
+			agent_i.mu.eval()
+
 		for agent in self.agent_list:
 			soft_update(agent.q_target, agent.q, rho=self.rho)
+			soft_update(agent.mu_target, agent.mu, rho=self.rho)
 
 		self.iteration += 1
 
