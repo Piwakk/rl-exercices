@@ -1,0 +1,20 @@
+dim_state: [8, 10, 10]
+dim_action: 2
+nber_ag: 3
+gamma: .95
+buffer_limit: 1000
+std: 0.1
+action_low: -1.
+action_high: 1.
+mini_batch_size: 300
+freqTest: 100
+maxLengthTest: 100
+maxLengthTrain: 25
+env: simple_adversary
+rho: 0.9
+nber_ep: 100000
+freq_verbose: 100
+freq_optim: 1000
+lr_critic: 0.003
+lr_action: 0.0003
+h: 120

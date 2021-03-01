@@ -1,0 +1,16 @@
+env: gridworld-v0
+map: gridworldPlans&Goals/plan2Multi.txt
+rewards:
+  0: -0.001
+  3: 1
+  4: 1
+  5: -1
+  6: -1
+seed: 5
+featExtractor: !!python/name:__main__.MapFromDumpExtractor4 ''
+freqSave: 1000
+freqTest: 1000
+nbTest: 100
+freqVerbose: 100
+fromFile: null
+nbEpisodes: 1000000
