@@ -27,7 +27,7 @@ class DDPG:
             nn.ReLU(),
             nn.Linear(20, 20),
             nn.ReLU(),
-            nn.Linear(20, 1),
+            nn.Linear(20, action_space.shape[0]),
             nn.Tanh(),
         )
         self.policy_optimizer = torch.optim.Adam(
@@ -36,7 +36,7 @@ class DDPG:
         self.policy_target = copy.deepcopy(self.policy)
 
         self.q = nn.Sequential(
-            nn.Linear(observation_space.shape[0] + 1, 20),
+            nn.Linear(observation_space.shape[0] + action_space.shape[0], 20),
             nn.ReLU(),
             nn.Linear(20, 20),
             nn.ReLU(),
@@ -50,13 +50,17 @@ class DDPG:
         self.action_high = action_space.high[0]
         self.noise_sigma = noise_sigma
 
-        self.memory = Memory(memory_max_size, observation_space.shape[0])
+        self.memory = Memory(
+            memory_max_size,
+            observation_space.shape[0],
+            action_size=action_space.shape[0],
+        )
         self.batch_size = batch_size
 
         self.gamma = gamma
         self.rho = rho
 
-    def step(self, state, train=True):
+    def step(self, state, train=True, episode=None):
         """Return the action obtained from `state`.
 
         :param train: if `True`, add a random noise."""
@@ -69,11 +73,17 @@ class DDPG:
 
         # Add some noise.
         if train:
-            action += torch.randn(1) * self.noise_sigma
+            noise = torch.randn(1) * self.noise_sigma
+
+            if episode is None:
+                action += torch.randn(1) * self.noise_sigma
+            else:
+                p = episode / 300
+                action = action + (1 - p) * noise
 
         return (
             torch.clip(action, self.action_low, self.action_high)
-            .view(1)
+            .view(-1)
             .detach()
             .numpy()
         )
