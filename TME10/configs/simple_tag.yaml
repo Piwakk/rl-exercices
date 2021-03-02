@@ -15,6 +15,6 @@ rho: 0.9
 nber_ep: 100000
 freq_verbose: 100
 freq_optim: 1000
-lr_critic: 0.003
-lr_action: 0.0003
+lr_critic: 0.0003
+lr_action: 0.00003
 h: 120

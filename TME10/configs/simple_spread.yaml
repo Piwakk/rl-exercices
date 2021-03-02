@@ -2,7 +2,7 @@ dim_state: [14, 14, 14]
 dim_action: 2
 nber_ag: 3
 gamma: .95
-buffer_limit: 1200
+buffer_limit: 1000000
 std: 0.2
 action_low: -1.
 action_high: 1.
@@ -14,7 +14,7 @@ env: simple_spread
 rho: 0.9
 nber_ep: 10000
 freq_verbose: 100
-freq_optim: 100
-lr_critic: 0.01
-lr_action: 0.001
+freq_optim: 10
+lr_critic: 0.0001
+lr_action: 0.0001
 h: 120

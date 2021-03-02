@@ -159,8 +159,9 @@ if __name__ == '__main__':
     nu = 1e-1
     freq_update_target = 1000
     mem_size = 1000000
-    mini_batch = 1000
-    mini_batch_pex = 100
+    mini_batch = 300
+    nberOptimization = 1
+    mini_batch_pex = 1000
     freqOptim = 10
     PEX = False
 
@@ -239,11 +240,12 @@ if __name__ == '__main__':
             phi = phi_new
             it += 1
             if it % freqOptim == 0 and replay.nentities > mini_batch:
-                batch = replay.sample(n=mini_batch)
-                loss_train, mean_r_train = agent.train(batch=batch)
-                loss += loss_train
-                mean_r += mean_r_train
-                k += 1
+                for _ in range(nberOptimization):
+                    batch = replay.sample(n=mini_batch)
+                    loss_train, mean_r_train = agent.train(batch=batch)
+                    loss += loss_train
+                    mean_r += mean_r_train
+                    k += 1
             j+=1
             if it % freq_update_target ==0:
                 #print('update', it)
@@ -258,7 +260,7 @@ if __name__ == '__main__':
                 for s, a, s_p, _, _, _ in temp_replay:
                     d = (s_p==g_artifical).all()
                     r = 1. if d else -0.1
-                    replay.store((s, a, s_p, r, d, g))
+                    replay.store((s, a, s_p, r, d, g_artifical))
                 temp_replay = []
                 coord = featureExtractor.getFeatures(ob)
                 x, y = coord[0][0], coord[0][1]
