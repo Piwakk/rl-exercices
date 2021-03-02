@@ -2,7 +2,7 @@ import argparse
 import sys
 import matplotlib
 #matplotlib.use("Qt5agg")
-matplotlib.use("TkAgg")
+#matplotlib.use("TkAgg")
 import gym
 import gridworld
 import torch
@@ -80,13 +80,14 @@ class DQNAgent(object):
 
 
     def act(self, observation, reward, done, t, goal):
-        if random()<self.eps(t):
+        eps = self.eps(t)
+        if random()<eps:
             return self.action_space.sample()
         with torch.no_grad(): 
             s = torch.tensor(self.featureExtractor.getFeatures(observation), device=device, dtype=float)
             g = torch.tensor(goal, device=device, dtype=float)
             q = self.q(s,g)
-            a = int(np.argmax(q))
+            a = int(np.argmax(q.cpu()))
             return a
 
     def train(self, batch):
@@ -95,6 +96,7 @@ class DQNAgent(object):
         n = len(batch)
         phi, actions, phi_new, reward, done, goal = [], [], [], [], [], []
         for e in batch:
+            #print(e)
             phi.append(e[0])
             actions.append(e[1])
             phi_new.append(e[2])
@@ -107,6 +109,11 @@ class DQNAgent(object):
         r = torch.tensor(reward, device=device, dtype=float)
         done = torch.tensor(done, device=device, dtype=float)
         g = torch.tensor(goal, device=device, dtype=float).view(n,-1)
+        #state = s
+        #state_p = s_p
+        #action = a
+        #rew = r
+        #goal = g
         # print('nber of positive reward:', )
         mean_r = r.clamp(0.).mean()
 
@@ -121,6 +128,11 @@ class DQNAgent(object):
         loss.backward()
         self.optim.step()
         self.iteration += 1
+        
+        #perte = loss
+        #qua = q
+        #target = y
+        #breakpoint()
 
         return loss, mean_r
     
@@ -154,13 +166,15 @@ if __name__ == '__main__':
     #---parameters---#
     H = [200,200]
     lr = 1e-3
-    gamma = 0.95
+    gamma = 0.99
     eps0 = 0.2
     nu = 1e-1
     freq_update_target = 1000
-    mem_size = 100000
+    mem_size = 1000000
     mini_batch = 1000
+    mini_batch_pex = 100
     freqOptim = 10
+    PEX = False
 
     #---agent---#
     agent_id = f'h{H}_lr{lr}_g{gamma}_eps0{eps0}_nu{nu}_clear{freq_update_target}_freqOptim{freqOptim}_memsize{mem_size}'
@@ -183,6 +197,7 @@ if __name__ == '__main__':
 
     #---buffer---#
     replay = Memory(mem_size=mem_size, prior=False)
+    prioritized_replay = Memory(mem_size=mem_size, prior=False)
 
     rsum = 0
     mean = 0
@@ -209,9 +224,9 @@ if __name__ == '__main__':
             agent.test = False
 
         if i % freqSave == 0:
-            pass
-            # with savepath.open("wb") as fp:
-            #     agent.save(savepath)
+            #pass
+            with savepath.open("wb") as fp:
+                 torch.save(agent.q, fp)
         j, k = 0, 0
         if verbose:
             env.render()
@@ -219,6 +234,7 @@ if __name__ == '__main__':
         loss, mean_r = 0, 0
         goal, _ = env.sampleGoal()
         goal = featureExtractor.getFeatures(goal)
+        phi = featureExtractor.getFeatures(ob)
 
         while True:
             if verbose:
@@ -226,27 +242,38 @@ if __name__ == '__main__':
             action = agent.act(ob, reward, done, i, goal)
             # ob_new, reward, done, _ = env.step(action)
             ob_new, _, _, _ = env.step(action)
-            done = (featureExtractor.getFeatures(ob_new)==goal).all()
+            phi_new = featureExtractor.getFeatures(ob_new) 
+            done = (phi_new==goal).all()
             reward = 1. if done else -0.1
-            replay.store((featureExtractor.getFeatures(ob), action, featureExtractor.getFeatures(ob_new), reward, done, goal))
+            replay.store((phi, action, phi_new, reward, done, goal))
+            if done:
+                prioritized_replay.store((phi, action, phi_new, reward, done, goal))
             ob = ob_new
+            phi = phi_new
             it += 1
-            if it % freqOptim == 0 and replay.nentities >= 1000:
+            if it % freqOptim == 0 and replay.nentities >= mini_batch:
                 batch = replay.sample(n=mini_batch)
+                if PEX and prioritized_replay.nentities >= mini_batch_pex:
+                    batch_pex = prioritized_replay.sample(n=mini_batch_pex)
+                    batch = np.concatenate((batch, batch_pex), axis=0)
                 loss_train, mean_r_train = agent.train(batch=batch)
+                logger.direct_write("train/loss_it", loss_train, it)
                 loss += loss_train
                 mean_r += mean_r_train
                 k += 1
-            if it % freq_update_target:
+            if it % freq_update_target ==0:
+                #print('update', it)
                 agent.update_target()
             j+=1
 
             rsum += reward
             if done or j == 100:
-                print(str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions ")
+                if i % 10 == 0:
+                    print(str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions ")
                 logger.direct_write("reward", rsum, i)
-                logger.direct_write("train/loss", loss/max(k,1), agent.iteration)
-                logger.direct_write("train/mean", mean_r/max(k,1), agent.iteration)
+                logger.direct_write("train/loss", loss/max(k,1), i)
+                logger.direct_write("train/mean", mean_r/max(k,1), i)
+                logger.write_critic_hist(agent, i)
                 agent.nbEvents = 0
                 mean += rsum
                 rsum = 0

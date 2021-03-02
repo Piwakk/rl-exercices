@@ -55,7 +55,7 @@ class DQNAgent(object):
         self.featureExtractor = opt.featExtractor(env)
         # self.eps = lambda t: min(0.1, eps0 / (1 + nu * t))
         self.eps = lambda t : eps0
-        self.epoch , self.iteration, self.update_target = 0, 0, 0
+        self.epoch , self.iteration = 0, 0
         self.freq_update_target = freq_update_target
 
         #---create the two Q functions---#
@@ -108,23 +108,25 @@ class DQNAgent(object):
         done = torch.tensor(done, device=device, dtype=float)
         g = torch.tensor(goal, device=device, dtype=float).view(n,-1)
 
-        y = r + gamma*torch.max(agent.q_hat(s_p, g), dim=1).values
+        mean_r = r.clamp(0.).mean()
+
+        with torch.no_grad():
+            y = r + gamma * agent.q_hat(s_p, g).max(dim=1).values
         indices = torch.arange(n, device=device)
         q = self.q(s, g)[indices, a]
         loss = self.criterion(y.detach(), q)
+
 
         # learning
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
         self.iteration += 1
+        
+        return loss, mean_r
 
-        # update target
-        if self.iteration % self.freq_update_target == 0:
-            self.q_hat.load_state_dict(self.q.state_dict())
-            self.update_target += 1
-        return loss
-
+    def update_target(self):
+        self.q_hat.load_state_dict(self.q.state_dict())
 
 if __name__ == '__main__':
 
@@ -150,18 +152,20 @@ if __name__ == '__main__':
     print("fe", featureExtractor.outSize)
 
     #---parameters---#
-    H = [128,128]
+    H = [200,200]
     lr = 1e-3
     gamma = 0.99
     eps0 = 0.2
     nu = 1e-1
-    freq_update_target = 100
+    freq_update_target = 1000
     mem_size = 1000000
     mini_batch = 1000
+    mini_batch_pex = 100
     freqOptim = 10
+    PEX = False
 
     #---agent---#
-    agent_id = f'HER_h{H}_lr{lr}_g{gamma}_eps0{eps0}_nu{nu}_clear{freq_update_target}'
+    agent_id = f'HER_h{H}_lr{lr}_g{gamma}_eps0{eps0}_nu{nu}_clear{freq_update_target}_freqOptim{freqOptim}_memsize{mem_size}'
     agent_dir = f'models/{config["env"]}/'
     os.makedirs(agent_dir, exist_ok=True)
     savepath = Path(f'{agent_dir}{agent_id}.pch')
@@ -169,7 +173,6 @@ if __name__ == '__main__':
         eps0=eps0, nu=nu, freq_update_target=freq_update_target)
     # agent.load(savepath)                        # the agent already exists
         
-
     #---yaml and tensorboard---#
     outdir = "./XP/" + config.env + "/dqn_" + "-" + agent_id + "-" + tstart
     print("Saving in " + outdir)
@@ -188,6 +191,7 @@ if __name__ == '__main__':
     itest = 0
     reward = 0
     done = False
+    it = 0
     for i in range(episode_count):
         if i % int(config.freqVerbose) == 0 and i >= config.freqVerbose:
             verbose = False # True
@@ -213,9 +217,10 @@ if __name__ == '__main__':
         if verbose:
             env.render()
 
-        loss = 0
+        loss, mean_r = 0, 0
         goal, _ = env.sampleGoal()
         goal = featureExtractor.getFeatures(goal)
+        phi = featureExtractor.getFeatures(ob)
         temp_replay = []
 
         while True:
@@ -225,16 +230,24 @@ if __name__ == '__main__':
             action = agent.act(ob, reward, done, i, goal)
             # ob_new, reward, done, _ = env.step(action)
             ob_new, _, _, _ = env.step(action)
-            done = (featureExtractor.getFeatures(ob_new)==goal).all()
+            phi_new = featureExtractor.getFeatures(ob_new)
+            done = (phi_new==goal).all()
             reward = 1. if done else -0.1
-            temp_replay.apend((featureExtractor.getFeatures(ob), action, featureExtractor.getFeatures(ob_new), reward, done, goal))
+            temp_replay.append((phi, action, phi_new, reward, done, goal))
             
             ob = ob_new
-            if i % freqOptim == 0 and replay.nentities > 2000:
+            phi = phi_new
+            it += 1
+            if it % freqOptim == 0 and replay.nentities > mini_batch:
                 batch = replay.sample(n=mini_batch)
-                loss += agent.train(batch=batch)
+                loss_train, mean_r_train = agent.train(batch=batch)
+                loss += loss_train
+                mean_r += mean_r_train
                 k += 1
             j+=1
+            if it % freq_update_target ==0:
+                #print('update', it)
+                agent.update_target()
 
             rsum += reward
             if done or j == 100:
@@ -247,10 +260,14 @@ if __name__ == '__main__':
                     r = 1. if d else -0.1
                     replay.store((s, a, s_p, r, d, g))
                 temp_replay = []
-                x, y = featureExtractor.getFeatures(ob)
-                print(str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions ")
+                coord = featureExtractor.getFeatures(ob)
+                x, y = coord[0][0], coord[0][1]
+                if i % 10 == 0:
+                    print(str(i) + " rsum=" + str(rsum) + ", " + str(j) + " actions ")
                 logger.direct_write("reward", rsum, i)
-                logger.direct_write("loss", loss/max(k,1), i)
+                logger.direct_write("train/loss", loss/max(k,1), i)
+                logger.direct_write("train/mean", mean_r/max(k,1), i)
+                logger.write_critic_hist(agent, i)
                 logger.direct_write("finalposition/x", x, i)
                 logger.direct_write("finalposition/y", y, i)
                 agent.nbEvents = 0
@@ -260,3 +277,6 @@ if __name__ == '__main__':
                 break
         agent.epoch += 1
     env.close()
+
+
+

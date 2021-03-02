@@ -295,11 +295,11 @@ class convMDP(nn.Module):
             for c in self.convs:
                 x = c(x)
                 x = self.activation(x)
+
                 i += 1
             x = x.view(n, -1)
 
         # print(x.size())
-
         # if self.dropout is not None:
         #    x = self.dropout(x)
         # print(x.shape)
@@ -356,8 +356,8 @@ class LogMe(dict):
 
     def write(self, i):
         if len(self.dic) == 0: return
-        s = f"Epoch {i} : "
         for k, v in self.dic.items():
+            s = f"Epoch {i} : "
             self.writer.add_scalar(k, sum(v) * 1. / len(v), i)
             s += f"{k}:{sum(v) * 1. / len(v)} -- "
         self.dic.clear()
@@ -373,6 +373,11 @@ class LogMe(dict):
     def add(self, k, v):
         self.dic[k].append(v)
 
+    def write_critic_hist(self, agent, i):
+        for i, layer in enumerate(agent.q.module):
+            if isinstance(layer, nn.Linear):
+                self.writer.add_histogram(f'critic/lin{i}_weight', layer.weight, i)
+                self.writer.add_histogram(f'critic/lin{i}_bias', layer.bias, i)
 
 def save_src(path):
     current_dir = os.getcwd()
@@ -436,3 +441,4 @@ def checkConfUpdate(outdir, config):
             print("update config failed, yaml error")
         except SyntaxError:
             print("pb with exec code in config")
+
