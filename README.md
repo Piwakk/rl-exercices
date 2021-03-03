@@ -57,17 +57,18 @@ by Victor Duthoit and Pierre Wan-Fat.
   - DDPG on Pendulum.
   - DDPG on LunarLander.
   - DDPG on MountainCar.
+- TME 8: GAN.
 - TME 9: VAE
-  - VAE linear
-  - VAE conv
+  - VAE (Linear).
+  - VAE (Convolutional).
 - TME 10: MADDPG
-  - simple_spread
-  - simple_adversary
-  - simple_tag
+  - Simple spread.
+  - Simple adversary.
+  - Simple tag.
 - TME 11: Imitation learning
-  - behavior cloning on LunarLander
-  - GAIL on LunarLander
+  - Behavior cloning on LunarLander.
+  - GAIL on LunarLander.
 - TME 12: Curriculum Learning
-  - Goal sampling
-  - HER Hinsight Experience Replay
-  - ISG Iterative Goal Sampling
+  - Goal sampling.
+  - HER (Hinsight Experience Replay).
+  - ISG (Iterative Goal Sampling).
